@@ -55,15 +55,15 @@ Allows users to flip an image in two directions:
 6. Program Menu
 
 Option| Description
-0| Load a new image
-1| Apply the Grayscale filter
-2| Apply the Black and White filter
-3| Apply the Invert filter
-4| Apply the Frame filter
-5| Flip the image
-6| Save the current image
-7| Exit the program
-
+ 0 Load a new image
+ 1 Apply the Grayscale filter
+ 2 Apply the Black and White filter
+ 3 Apply the Invert filter
+ 4 Apply the Frame filter
+ 5 Flip the image
+ 6 Save the current image
+ 7 Exit the program
+ 
 7. Requirements
 
 To run the project, you need:
