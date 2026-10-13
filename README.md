@@ -55,14 +55,23 @@ Allows users to flip an image in two directions:
 6. Program Menu
 
 Option| Description
+
  0 Load a new image
+ 
  1 Apply the Grayscale filter
+ 
  2 Apply the Black and White filter
+ 
  3 Apply the Invert filter
+ 
  4 Apply the Frame filter
+ 
  5 Flip the image
+ 
  6 Save the current image
+ 
  7 Exit the program
+ 
  
 7. Requirements
 
@@ -74,16 +83,16 @@ To run the project, you need:
 
 8. How to Run
 
-1. Place the C++ source file and "Image_Class.h" in the appropriate project directory.
-2. Open the project in your C++ IDE.
-3. Compile and run the program.
-4. Enter the filename of the image you want to process.
-5. Select a filter from the program menu.
-6. Follow the on-screen instructions.
-7. Select option "6" to save the processed image.
-8. Select option "7" to exit the program.
+ 1. Place the C++ source file and "Image_Class.h" in the appropriate project directory.
+ 2. Open the project in your C++ IDE.
+ 3. Compile and run the program.
+ 4. Enter the filename of the image you want to process.
+ 5. Select a filter from the program menu.
+ 6. Follow the on-screen instructions.
+ 7. Select option "6" to save the processed image.
+ 8. Select option "7" to exit the program.
 
-9. Saving Images
+ 9. Saving Images
 
 After selecting option "6", enter a filename for the processed image, including the appropriate file extension.
 
@@ -97,12 +106,14 @@ Use a supported image format and a valid output path.
 
 A suggested project structure is:
 
+
 ImageFiltersProject/
 ├── main.cpp
 ├── Image_Class.h
 ├── README.md
 └── images/
     └── input.jpg
+
 
 The actual filenames and directory structure may vary depending on the project setup.
 
