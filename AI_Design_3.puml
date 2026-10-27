@@ -1,0 +1,127 @@
+@startuml
+title AI Design 3 - Modular Vole Machine Simulator
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+hide empty members
+
+class VoleMachine {
+  - cpu: CPU
+  - memory: Memory
+  - loader: ProgramLoader
+  - screen: ScreenDevice
+  + reset(startAddress: byte): void
+  + step(): StepResult
+  + runUntilHalt(): StepResult
+  + isHalted(): bool
+  + snapshot(): MachineSnapshot
+}
+class CPU {
+  - registers: RegisterFile
+  - pc: ProgramCounter
+  - ir: InstructionRegister
+  - decoder: InstructionDecoder
+  - executor: InstructionExecutor
+  + step(memory: Memory, screen: ScreenDevice): StepResult
+  + getSnapshot(): CPUSnapshot
+}
+class Memory {
+  - cells: byte[256]
+  + read(address: byte): byte
+  + write(address: byte, value: byte): void
+  + loadBytes(start: byte, bytes: byte[]): bool
+  + snapshot(): byte[]
+}
+class RegisterFile {
+  - values: byte[16]
+  + read(index: nibble): byte
+  + write(index: nibble, value: byte): void
+  + reset(): void
+  + snapshot(): byte[]
+}
+class ProgramCounter {
+  - address: byte
+  + value(): byte
+  + set(address: byte): void
+  + advanceByTwo(): void
+}
+class InstructionRegister {
+  - value: word16
+  + get(): word16
+  + set(value: word16): void
+}
+class InstructionDecoder {
+  + decode(raw: word16): DecodedInstruction
+  + validate(raw: word16): ValidationResult
+}
+class DecodedInstruction {
+  + opcode: char
+  + r: nibble
+  + x: nibble
+  + y: nibble
+  + raw: word16
+}
+class InstructionExecutor {
+  + execute(i: DecodedInstruction, cpu: CPU, memory: Memory, screen: ScreenDevice): StepResult
+}
+class ProgramLoader {
+  + parseFile(path: string): byte[]
+  + load(path: string, start: byte, memory: Memory): ValidationResult
+  + validateStart(start: byte): bool
+}
+class ScreenDevice {
+  - outputBuffer: string
+  + writeByte(value: byte): void
+  + output(): string
+  + clear(): void
+}
+class ConsoleUI {
+  + showMenu(): int
+  + displayState(state: MachineSnapshot): void
+  + requestRegisterEdit(): RegisterEdit
+  + requestMemoryEdit(): MemoryEdit
+}
+class ValidationResult {
+  + valid: bool
+  + message: string
+}
+class StepResult {
+  + success: bool
+  + halted: bool
+  + message: string
+}
+class CPUSnapshot {
+  + pc: byte
+  + ir: word16
+  + registers: byte[]
+}
+class MachineSnapshot {
+  + memory: byte[]
+  + cpu: CPUSnapshot
+  + screenOutput: string
+}
+
+VoleMachine *-- CPU
+VoleMachine *-- Memory
+VoleMachine *-- ProgramLoader
+VoleMachine *-- ScreenDevice
+CPU *-- RegisterFile
+CPU *-- ProgramCounter
+CPU *-- InstructionRegister
+CPU *-- InstructionDecoder
+CPU *-- InstructionExecutor
+InstructionDecoder ..> DecodedInstruction : creates
+InstructionDecoder ..> ValidationResult : returns
+InstructionExecutor ..> StepResult : returns
+ProgramLoader ..> Memory : loads
+ConsoleUI ..> VoleMachine : controls/displays
+VoleMachine ..> MachineSnapshot : creates
+MachineSnapshot *-- CPUSnapshot
+note right of Memory
+256 cells, addresses 00..FF.
+Each cell stores 8 bits.
+end note
+note bottom of InstructionExecutor
+STORE to FF is routed to ScreenDevice.
+C000 halts execution.
+end note
+@enduml

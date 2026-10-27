@@ -1,0 +1,168 @@
+@startuml
+title Final Design - Layered Vole Machine Simulator
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+hide empty members
+
+package "Application Layer" {
+  class AppController {
+    - machine: VoleMachine
+    - loader: ProgramLoader
+    - view: ConsoleView
+    + runApplication(): void
+    + loadProgram(path: string, start: byte): ValidationResult
+    + runAll(): StepResult
+    + runOneStep(): StepResult
+    + editRegister(index: nibble, value: byte): void
+    + editMemory(address: byte, value: byte): void
+  }
+  class ConsoleView {
+    + showMenu(): MenuChoice
+    + askStartAddress(): byte
+    + askRegisterEdit(): RegisterEdit
+    + askMemoryEdit(): MemoryEdit
+    + displayState(state: MachineSnapshot): void
+    + displayMessage(message: string): void
+  }
+}
+package "Machine / Domain Layer" {
+  class VoleMachine {
+    - cpu: CPU
+    - memory: Memory
+    - screen: ScreenDevice
+    + reset(startAddress: byte): void
+    + step(): StepResult
+    + runUntilHalt(): StepResult
+    + snapshot(): MachineSnapshot
+    + isHalted(): bool
+    + editMemory(address: byte, value: byte): void
+  }
+  class CPU {
+    - registers: RegisterFile
+    - pc: ProgramCounter
+    - ir: InstructionRegister
+    - decoder: InstructionDecoder
+    - executor: InstructionExecutor
+    + step(memory: Memory, screen: ScreenDevice): StepResult
+    + snapshot(): CPUSnapshot
+    + editRegister(index: nibble, value: byte): void
+  }
+  class Memory {
+    - cells: byte[256]
+    + read(address: byte): byte
+    + write(address: byte, value: byte): void
+    + loadBytes(start: byte, bytes: byte[]): ValidationResult
+    + snapshot(): byte[]
+    + canLoad(start: byte, count: int): bool
+  }
+  class RegisterFile {
+    - values: byte[16]
+    + read(index: nibble): byte
+    + write(index: nibble, value: byte): void
+    + reset(): void
+    + snapshot(): byte[]
+  }
+  class ProgramCounter {
+    - address: byte
+    + value(): byte
+    + set(address: byte): void
+    + advanceByTwo(): void
+  }
+  class InstructionRegister {
+    - value: word16
+    + get(): word16
+    + set(value: word16): void
+  }
+  class ScreenDevice {
+    - outputBuffer: string
+    + writeByte(value: byte): void
+    + output(): string
+    + clear(): void
+  }
+}
+package "Instruction Processing" {
+  class InstructionDecoder {
+    + decode(raw: word16): DecodedInstruction
+    + validate(raw: word16): ValidationResult
+  }
+  class DecodedInstruction {
+    + opcode: char
+    + r: nibble
+    + x: nibble
+    + y: nibble
+    + raw: word16
+  }
+  class InstructionExecutor {
+    + execute(i: DecodedInstruction, cpu: CPU, memory: Memory, screen: ScreenDevice): StepResult
+    - executeLoad(i: DecodedInstruction, cpu: CPU, memory: Memory): void
+    - executeStore(i: DecodedInstruction, cpu: CPU, memory: Memory, screen: ScreenDevice): void
+    - executeArithmetic(i: DecodedInstruction, cpu: CPU): void
+    - executeLogic(i: DecodedInstruction, cpu: CPU): void
+    - executeJump(i: DecodedInstruction, cpu: CPU): void
+  }
+  class ValidationResult {
+    + valid: bool
+    + message: string
+  }
+  class StepResult {
+    + success: bool
+    + halted: bool
+    + message: string
+  }
+}
+package "Program Input" {
+  class ProgramLoader {
+    + parseFile(path: string): byte[]
+    + load(path: string, start: byte, memory: Memory): ValidationResult
+    + validateLine(line: string): bool
+    + validateStart(start: byte): bool
+  }
+}
+class CPUSnapshot {
+  + pc: byte
+  + ir: word16
+  + registers: byte[]
+}
+class MachineSnapshot {
+  + memory: byte[]
+  + cpu: CPUSnapshot
+  + screenOutput: string
+}
+
+AppController *-- VoleMachine
+AppController *-- ProgramLoader
+AppController *-- ConsoleView
+VoleMachine *-- CPU
+VoleMachine *-- Memory
+VoleMachine *-- ScreenDevice
+CPU *-- RegisterFile
+CPU *-- ProgramCounter
+CPU *-- InstructionRegister
+CPU *-- InstructionDecoder
+CPU *-- InstructionExecutor
+InstructionDecoder ..> DecodedInstruction : creates
+InstructionDecoder ..> ValidationResult : returns
+InstructionExecutor ..> StepResult : returns
+ProgramLoader ..> Memory : loads validated bytes
+VoleMachine ..> MachineSnapshot : creates
+MachineSnapshot *-- CPUSnapshot
+ConsoleView ..> MachineSnapshot : displays
+AppController ..> StepResult : handles
+InstructionExecutor ..> ScreenDevice : STORE to FF
+note right of Memory
+256 cells: 00..FF; 8 bits each.
+Instruction fetch reads two adjacent cells.
+end note
+note bottom of ProgramLoader
+Ignore blank lines and lines beginning with ';'.
+Accept four hexadecimal digits per instruction,
+optionally followed by a ';' comment.
+Start address must be even and below FF.
+Reject any load that exceeds instruction memory.
+end note
+note bottom of VoleMachine
+PC advances by two after fetch.
+A taken jump replaces the next PC.
+C000 halts the machine.
+end note
+@enduml
